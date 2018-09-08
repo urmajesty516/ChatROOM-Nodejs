@@ -2,6 +2,9 @@ var app=require('express')();
 var http=require('http').Server(app);
 var io=require("socket.io")(http);
 var users={};
+
+const port = process.env.PORT || 3000;
+
 //The app.get() method specifies a callback function that will be invoked 
 //whenever there is an HTTP GET request with a path ('/') relative to the site root.
 app.get('/',function(req,res){
@@ -111,7 +114,7 @@ io.on('connection',function(socket){
 	});
 });
 
-http.listen(3000,function(){
+http.listen(port,function(){
 	console.log('Listening on port 3000');
 });
 
