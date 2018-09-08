@@ -4,11 +4,11 @@
     <title>Socket.IO chat</title>
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
     <style>
-	  html,body { width: 100%; height: 100%; overflow-x: hidden;}
+	  html,body { width: 100%; height: 100%; overflow: hidden;}
       * { margin: 0; padding: 0; box-sizing: border-box;}
       body { font: 13px Helvetica, Arial; }
 	  
-	  #table_left {border-collapse: collapse; position: relative; min-height: 800px;}
+	  #table_left {border-collapse: collapse; height: 550px; margin: 0 auto; width: 50%; overflow-y: auto}
 	  #table_left td {vertical-align: 0;}
 	  
       #group_chat { background: #000; padding: 3px; width: 100%; }
@@ -16,23 +16,25 @@
       #group_chat button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
 	  
 	  .PM {position: absolute; left: 0; right: 0; top: 0; margin: 5% auto; padding: 0; width: 500px; height: 50px; border-collapse: collapse; z-index: 10; display: none;}
-	  .pm_messages { list-style-type: none; margin: 0; padding: 0; height: 300px; border: 2px solid #292929; background: #FFF;}
+	  .pm_messages { list-style-type: none; margin: 0; padding: 0; height: 300px; background: #FFF;}
 	  .pm_messages li:nth-child(odd) { background: #eee; }
 	  .pm_messages li { padding: 4px; }
       .private_chat { background: #000; padding: 2px; position: absolute; bottom: 0px; width: 100%; }
-      .private_chat input { border: none; padding: 10px; width: 89%; margin-right: .5%; }
+      .private_chat input { border: none; padding: 10px; width: 89.5%; margin-right: .5%; }
       .private_chat button { border: none; width: 10%; background: rgb(130, 224, 255); padding: 10px; }	  
 	  .PM_title { width: 100%; height: 30px; background: rgb(130, 224, 255); border: 2px solid #000; border-bottom: none; padding: 5px;}
 	  .online_user { cursor: pointer}
 	  .close {color: red; font-weight: 700; font-size: 15px; cursor: pointer; float: right}
 	  
-	  #tools { list-style-type: none; margin: 0; padding: 0; position: absolute; right: 180px; }
+	  #tools { list-style-type: none; margin: 0; padding: 0; }
 	  #tools li i {font-size: 20px; line-height: 36px; cursor: pointer} 
 	  #tools #file_uploader {display: none}
+	  #upload_token {color: #fff;}
 	  
-	  .uploaded_img {width: auto; height: auto; max-width: 500px;}
+	  #nickname { color: red }
+	  .uploaded_img {width: auto; height: auto; max-width: 300px;}
 	  
-      #messages { list-style-type: none; margin: 0; padding: 0; width: 100%}
+      #messages { list-style-type: none; margin: 0; padding: 0; width: 100%; max-height: 478px; overflow-y: auto}
       #messages li { padding: 5px 10px; }
       #messages li:nth-child(odd) { background: #eee; }
 	  #users_online{ position: absolute; list-style-type: none; margin: 0; padding: 0; height: 100%; width: 100%; overflow-y: auto;}
@@ -120,9 +122,11 @@
     </style>
   </head>
   <body>
-	<table id="table_left" width="100%">
-		<tr><td width="85%"><ul id="messages"></ul></td>
-			<td width="15%" style="background: pink; height: 100%">
+	<audio><source src="/definite.mp3" type="audio/mpeg"></audio>
+	<table id="table_left">
+		<tr><td colspan="2" style="background: #292929; color: #FFF;"><span style="padding-left: 5px; line-height: 25px">Chatroom v0.0.1</span><span style="float: right; padding: 5px;">-Powered by Janice Zhong</span></td></tr>
+		<tr><td width="85%" style="overflow-y: auto"><ul id="messages"></ul></td>
+			<td width="15%" style="background: #82e0ff; height: 100%">
 				<ul id="users_online">
 					<li><strong>Users Online</strong></li>
 				</ul>			
@@ -137,7 +141,7 @@
 		
 		<table class="PM">	
 			<tr><td class="PM_title"><span>Message to: </span><span class='pm_user'></span><span class='close'>X</span></td></tr>
-			<tr><td><ul class="pm_messages"></ul></td></tr>
+			<tr><td style="border: 2px solid #292929;"><ul class="pm_messages"></ul></td></tr>
 			<tr><td>
 				<form class='private_chat' action="">
 				  <input class="pm" autocomplete="off" /><button>Send</button>
@@ -162,6 +166,7 @@
 	<script>
 	$(function(){
 		  var nickname;
+		  var audio=$('audio')[0];
 		  $('#messages').append($('<li id="nickname" >').text("Please type in your nickname."));
 		  var socket = io();		  
 		  $('#group_chat').submit(function(){
@@ -215,6 +220,7 @@
 			  socket.on('chat',function(msg){
 				//append the msg to the screen
 				$('#messages').append($('<li>').text(msg));
+				audio.play();
 			  });
 			  
 			  socket.on('username_exist',function(msg){
@@ -268,6 +274,7 @@
 					$('.pm_user').text(last_From);
 				}
 				$('.pm_messages').append($('<li>').text(From+': '+msg));
+				audio.play();
 			  });
 			  
 			  //file uploading
@@ -318,6 +325,7 @@
 				//replace the loading icon with a loaded image
 				//remove id attribute after replacing to avoid error
 				$('#lds-spinner-'+data['user']).html('<img class="uploaded_img" src='+data['data']+'>').attr('id','');
+				audio.play();
 			  });
 		  }
 	});
