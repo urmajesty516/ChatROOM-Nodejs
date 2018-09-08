@@ -1,6 +1,7 @@
 {
-name: "socket-chat-example",
-version: "0.0.1",
-description: "my first socket.io app",
-dependencies: {}
+"name": "socket-chatroom",
+"version": "0.0.1",
+"description": "my first socket.io app",
+"author": "Janice Zhong"
+"dependencies": {}
 }
