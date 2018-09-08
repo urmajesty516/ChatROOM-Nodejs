@@ -1,0 +1,326 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+    <style>
+	  html,body { width: 100%; height: 100%; overflow-x: hidden;}
+      * { margin: 0; padding: 0; box-sizing: border-box;}
+      body { font: 13px Helvetica, Arial; }
+	  
+	  #table_left {border-collapse: collapse; position: relative; min-height: 800px;}
+	  #table_left td {vertical-align: 0;}
+	  
+      #group_chat { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      #group_chat input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      #group_chat button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+	  
+	  .PM {position: absolute; left: 0; right: 0; top: 0; margin: 5% auto; padding: 0; width: 500px; height: 50px; border-collapse: collapse; z-index: 10; display: none;}
+	  .pm_messages { list-style-type: none; margin: 0; padding: 0; height: 300px; border: 2px solid #292929; background: #FFF;}
+	  .pm_messages li:nth-child(odd) { background: #eee; }
+	  .pm_messages li { padding: 4px; }
+      .private_chat { background: #000; padding: 2px; position: absolute; bottom: 0px; width: 100%; }
+      .private_chat input { border: none; padding: 10px; width: 89%; margin-right: .5%; }
+      .private_chat button { border: none; width: 10%; background: rgb(130, 224, 255); padding: 10px; }	  
+	  .PM_title { width: 100%; height: 30px; background: rgb(130, 224, 255); border: 2px solid #000; border-bottom: none; padding: 5px;}
+	  .online_user { cursor: pointer}
+	  .close {color: red; font-weight: 700; font-size: 15px; cursor: pointer; float: right}
+	  
+	  #tools { list-style-type: none; margin: 0; padding: 0; position: absolute; right: 180px; }
+	  #tools li i {font-size: 20px; line-height: 36px; cursor: pointer} 
+	  #tools #file_uploader {display: none}
+	  
+	  .uploaded_img {width: auto; height: auto; max-width: 500px;}
+	  
+      #messages { list-style-type: none; margin: 0; padding: 0; width: 100%}
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+	  #users_online{ position: absolute; list-style-type: none; margin: 0; padding: 0; height: 100%; width: 100%; overflow-y: auto;}
+	  #users_online li{  padding: 5px 10px; }
+	  
+	.lds-spinner {
+	  color: #292929;
+	  display: inline-block;
+	  position: relative;
+	  width: 64px;
+	  height: 64px;
+	}
+	.lds-spinner div {
+	  transform-origin: 32px 32px;
+	  animation: lds-spinner 1.2s linear infinite;
+	}
+	.lds-spinner div:after {
+	  content: " ";
+	  display: block;
+	  position: absolute;
+	  top: 3px;
+	  left: 29px;
+	  width: 5px;
+	  height: 14px;
+	  border-radius: 20%;
+	  background: #000;
+	}
+	.lds-spinner div:nth-child(1) {
+	  transform: rotate(0deg);
+	  animation-delay: -1.1s;
+	}
+	.lds-spinner div:nth-child(2) {
+	  transform: rotate(30deg);
+	  animation-delay: -1s;
+	}
+	.lds-spinner div:nth-child(3) {
+	  transform: rotate(60deg);
+	  animation-delay: -0.9s;
+	}
+	.lds-spinner div:nth-child(4) {
+	  transform: rotate(90deg);
+	  animation-delay: -0.8s;
+	}
+	.lds-spinner div:nth-child(5) {
+	  transform: rotate(120deg);
+	  animation-delay: -0.7s;
+	}
+	.lds-spinner div:nth-child(6) {
+	  transform: rotate(150deg);
+	  animation-delay: -0.6s;
+	}
+	.lds-spinner div:nth-child(7) {
+	  transform: rotate(180deg);
+	  animation-delay: -0.5s;
+	}
+	.lds-spinner div:nth-child(8) {
+	  transform: rotate(210deg);
+	  animation-delay: -0.4s;
+	}
+	.lds-spinner div:nth-child(9) {
+	  transform: rotate(240deg);
+	  animation-delay: -0.3s;
+	}
+	.lds-spinner div:nth-child(10) {
+	  transform: rotate(270deg);
+	  animation-delay: -0.2s;
+	}
+	.lds-spinner div:nth-child(11) {
+	  transform: rotate(300deg);
+	  animation-delay: -0.1s;
+	}
+	.lds-spinner div:nth-child(12) {
+	  transform: rotate(330deg);
+	  animation-delay: 0s;
+	}
+	@keyframes lds-spinner {
+	  0% {
+		opacity: 1;
+	  }
+	  100% {
+		opacity: 0;
+	  }
+	}
+	  
+    </style>
+  </head>
+  <body>
+	<table id="table_left" width="100%">
+		<tr><td width="85%"><ul id="messages"></ul></td>
+			<td width="15%" style="background: pink; height: 100%">
+				<ul id="users_online">
+					<li><strong>Users Online</strong></li>
+				</ul>			
+			</td>
+		</tr>
+		<tr><td>
+			<form id='group_chat' action="">
+			  <ul id='tools'><li><i id='upload_token' class="fas fa-file-upload" ></i><input id='file_uploader' type='file'></li></ul>
+			  <input id="m" autocomplete="off" /><button>Send</button>
+			</form>		
+		</td></tr>
+		
+		<table class="PM">	
+			<tr><td class="PM_title"><span>Message to: </span><span class='pm_user'></span><span class='close'>X</span></td></tr>
+			<tr><td><ul class="pm_messages"></ul></td></tr>
+			<tr><td>
+				<form class='private_chat' action="">
+				  <input class="pm" autocomplete="off" /><button>Send</button>
+				</form>		
+			</td></tr>		
+		</table>		
+	</table>
+	<!--
+    <ul id="messages"></ul>
+    <form id='group_chat' action="">
+	  <ul id='tools'><li><i id='upload_token' class="fas fa-file-upload" ></i><input id='file_uploader' type='file'></li></ul>
+      <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+	<ul id="users_online">
+		<li><strong>Users Online</strong></li>
+	</ul>-->
+	
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js"
+	 integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+	 crossorigin="anonymous"></script>
+	<script>
+	$(function(){
+		  var nickname;
+		  $('#messages').append($('<li id="nickname" >').text("Please type in your nickname."));
+		  var socket = io();		  
+		  $('#group_chat').submit(function(){
+			var sending_msg=$('#m').val();
+			if(!nickname | nickname==""){
+				//feedback user nickname
+				socket.emit('new_users',sending_msg);
+				nickname=sending_msg;
+				//ask for user online list
+				socket.emit('users_online',false);				
+			}else{
+				//if message bar is not empty
+				if(sending_msg!=""){
+					socket.emit('chat',sending_msg);
+					$('#messages').append($('<li>').text(nickname+": "+sending_msg));		
+				}
+			}		
+			$('#m').val('');
+			return false;
+		  });
+		  
+		  if(!nickname){
+			  //{user} typing event
+			  $('#m').on('keydown',function(){
+				if($('#m').val()!=''){
+					socket.emit('user_typing',true);
+				}
+			  });
+			  //{user} off typing event
+			  $('#m').on('keyup',function(){
+				//check if user is typing something
+				if($('#m').val()==''){
+					socket.emit('user_typing',false);
+				}			
+			  });
+			  
+			  socket.on('user_typing',function(msg){
+				var index= msg.indexOf(']');
+				liID=msg.substring(1,index);
+				msg=msg.substring(index+1);		  
+				//make sure there is only one {user} typing msg
+				if($('#'+liID+'').length==0){
+					$('#messages').append($('<li id='+liID+' >').text(msg));
+				}			
+			  });
+			  
+			  socket.on('user_typing_off',function(msg){
+				$('#'+msg+'').remove();
+			  });
+			  
+			  socket.on('chat',function(msg){
+				//append the msg to the screen
+				$('#messages').append($('<li>').text(msg));
+			  });
+			  
+			  socket.on('username_exist',function(msg){
+				$('#messages').append($('<li>').text(msg));
+				nickname="";
+			  });		  
+			  
+			  socket.on('users_online',function(msg){
+				if($.isArray(msg)){
+					$.each(msg, function(item,value){
+						$('#users_online').append('<li class="online_user" id=online_'+value+'>'+value+'</li>');
+					});				
+				}else{
+					$('#users_online').append('<li class="online_user" id=online_'+msg+'>'+msg+'</li>');
+				}			
+			  });
+			  
+			  socket.on('users_online_delete',function(msg){
+				$('#online_'+msg).remove();
+			  });	
+			
+			  //private messaging
+			  var last_From;
+			  //have to use event delegation here, because there is no .online_user at the beginning
+			  $(document).on('click','.online_user',function(){
+				$('.PM').show();
+				$('.pm_user').text($(this).text());
+			  });
+			  
+			  $('.close').on('click',function(){
+				$('.PM').hide();
+			  });
+			  
+			  $('.private_chat').on('submit',function(){
+				if(!$('.pm_user').text()){
+					$('.pm_user').text(last_From);
+				}
+				var msg={ 'From': nickname, 'To': $('.pm_user').text(), 'message': $('.pm').val()};
+				socket.emit('pm',msg);
+				$('.pm_messages').append($('<li>').text('You: '+$('.pm').val()));
+				$('.pm').val('');
+				return false;
+			  });
+			  
+			  socket.on('pm',function(msg){
+				var From=msg.split('|')[0];
+				var msg=msg.split('|')[1];
+				last_From=From;			  
+				if(!$('.PM').is(':visible')){
+					$('.PM').show();
+					$('.pm_user').text(last_From);
+				}
+				$('.pm_messages').append($('<li>').text(From+': '+msg));
+			  });
+			  
+			  //file uploading
+			  var selectedFile;
+			  var fileName;		
+			  var FReader;		
+			  
+			  //file uploading token
+			  $('#upload_token').on('click',function(){
+				$('#file_uploader').click();
+			  });
+			  
+			  //file uploader handler
+			  $('#file_uploader').on('change',function(e){
+				if($('#file_uploader').val()!=""){
+					selectedFile=$(this)[0].files[0];
+					fileName=selectedFile.name;	
+					console.log(selectedFile);
+					console.log(fileName);
+					startUpload(e);						
+				}			
+			  });
+			  
+			 
+			  function startUpload(e){				
+				var extensions=['jpg','jpeg','png','gif'];
+				var fileType=fileName.split('.').pop().toLowerCase();
+				FReader=new FileReader();
+				FReader.onload=function(e){
+					//check if file is a image
+					if(extensions.indexOf(fileType)>-1){
+						$('#messages').append('<li>'+nickname+': <img class="uploaded_img" src='+e.target.result+'></li>');
+						socket.emit('uploading',{'user': nickname, 'name': fileName, 'data': e.target.result});					
+					}
+				}
+				socket.emit('startUpload',{'name': fileName, 'size': selectedFile.size});
+				//This line is needed with FReader.onload
+				FReader.readAsDataURL(e.target.files[0]);
+			  }
+			  
+			  socket.on('startUpload',function(msg){
+				//append a loading icon
+				$('#messages').append($('<li>').html(msg));
+			  });
+			  
+			  socket.on('uploading',function(data){
+				//$('#messages').append('<li>'+data['user']+': <img class="uploaded_img" src='+data['data']+'></li>');
+				//replace the loading icon with a loaded image
+				//remove id attribute after replacing to avoid error
+				$('#lds-spinner-'+data['user']).html('<img class="uploaded_img" src='+data['data']+'>').attr('id','');
+			  });
+		  }
+	});
+	</script>	
+  </body>
+</html>
