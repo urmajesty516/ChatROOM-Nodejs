@@ -2,6 +2,7 @@
 "name": "socket-chatroom",
 "version": "0.0.1",
 "description": "my first socket.io app",
-"author": "Janice Zhong"
+"author": "Janice Zhong",
+"license": "UNLICENSED",
 "dependencies": {}
 }
