@@ -4,6 +4,7 @@
     <title>Socket.IO chat</title>
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
     <link rel="stylesheet" href="/style.css">
+	<link rel="stylesheet" href="/jquery.fancybox.min.css">
   </head>
   <body>
 	<audio><source src="/definite.mp3" type="audio/mpeg"></audio>
@@ -37,6 +38,7 @@
 	<script src="https://code.jquery.com/jquery-3.3.1.min.js"
 	 integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
 	 crossorigin="anonymous"></script>
+	 <script src="/jquery.fancybox.min.js"></script>
 	<script>
 	$(function(){
 		  var nickname;
@@ -156,6 +158,7 @@
 		  var selectedFile;
 		  var fileName;		
 		  var FReader;		
+		  var extensions=['jpg','jpeg','png','gif','txt','.doc','.pdf'];
 		  
 		  //file uploading token
 		  $('#upload_token').on('click',function(){
@@ -175,16 +178,18 @@
 		  
 		 
 		  function startUpload(e){				
-			var extensions=['jpg','jpeg','png','gif'];
 			var fileType=fileName.split('.').pop().toLowerCase();
 			FReader=new FileReader();
 			FReader.onload=function(e){
 				//check if file is a image
-				if(extensions.indexOf(fileType)>-1){
-					$('#messages').append('<li>'+nickname+': <img class="uploaded_img" src='+e.target.result+'></li>');
-					scrollToBottom();						
-					socket.emit('uploading',{'user': nickname, 'name': fileName, 'data': e.target.result});					
+				if(extensions.indexOf(fileType)>-1 && extensions.indexOf(fileType)<4){
+					$('#messages').append('<li>'+nickname+': <a href='+e.target.result+' data-fancybox="'+nickname+'-fancybox-sent"><img class="uploaded_img" src='+e.target.result+'></a></li>');
+					fancyboxConfig();															
+				}else if(extensions.indexOf(fileType)>3){
+					$('#messages').append('<li>'+nickname+': <a href="'+e.target.result+'" download>'+fileName+'</a></li>');					
 				}
+				scrollToBottom();
+				socket.emit('uploading',{'user': nickname, 'name': fileName, 'data': e.target.result});
 			}
 			socket.emit('startUpload',{'name': fileName, 'size': selectedFile.size});
 			//This line is needed with FReader.onload
@@ -199,7 +204,15 @@
 		  socket.on('uploading',function(data){
 			//replace the loading icon with a loaded image
 			//remove id attribute after replacing to avoid error
-			$('#lds-spinner-'+data['user']).html('<img class="uploaded_img" src='+data['data']+'>').attr('id','');
+			//import fancybox feature, collect all the images the user received as a image gallery
+			var fileType=data['fileName'].split('.').pop().toLowerCase();
+			console.log(data['data']);
+			if(extensions.indexOf(fileType)>-1 && extensions.indexOf(fileType)<4){
+				$('#lds-spinner-'+data['user']).html('<a href='+data['data']+' data-fancybox="'+data['user']+'-fancybox-received"><img class="uploaded_img" src='+data['data']+'></a>').attr('id','');
+				fancyboxConfig();				
+			}else if(extensions.indexOf(fileType)>3){
+				$('#lds-spinner-'+data['user']).html('<a href="'+data['data']+'" download>'+data['fileName']+'</a>').attr('id','');
+			}
 			audio.play();
 			scrollToBottom();
 		  });
@@ -209,6 +222,15 @@
 			$('#messages').animate({
 				scrollTop: $('#messages')[0].scrollHeight
 			},300);				  
+		  }
+		  function fancyboxConfig(){
+			$("[data-fancybox]").fancybox({
+				buttons : [
+					"share",
+					"download",
+					"close",
+				]
+			});			  
 		  }
 	});
 	</script>	

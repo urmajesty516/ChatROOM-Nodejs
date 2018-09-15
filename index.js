@@ -5,6 +5,8 @@ var http=require('http').Server(app);
 var io=require("socket.io")(http);
 var users={};
 
+
+
 const port = process.env.PORT || 3000;
 
 //The app.get() method specifies a callback function that will be invoked 
@@ -113,7 +115,7 @@ io.on('connection',function(socket){
 	socket.on('uploading',function(file){
 		for(var i in users){
 			if(users[i]!=socket){
-				users[i].emit('uploading', {'user': file['user'], 'data': file['data']});
+				users[i].emit('uploading', {'user': file['user'], 'data': file['data'], 'fileName': file['name']});
 			}
 		}
 	});
