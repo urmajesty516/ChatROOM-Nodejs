@@ -4,6 +4,7 @@ var app=express();
 var http=require('http').Server(app);
 var io=require("socket.io")(http);
 var users={};
+var fs=require('fs');
 
 
 
@@ -112,11 +113,42 @@ io.on('connection',function(socket){
 			}
 		}
 	});
-	socket.on('uploading',function(file){
-		for(var i in users){
-			if(users[i]!=socket){
-				users[i].emit('uploading', {'user': file['user'], 'data': file['data'], 'fileName': file['name']});
-			}
+	var fileData=[];
+	var slice=0;
+	var dir=__dirname+'/public/files/';
+	socket.on('uploading',function(file){	
+		fileData.push(file['data']);
+		slice++;
+		/*If all the data is collected*/
+		if(slice*100000>=file['size']){
+			/*Join the chrunks of arrayBuffers*/
+			var fileBuffer = Buffer.concat(fileData); 
+			/*Convert arrayBuffer to Buffer*/
+			var buffer=toBuffer(fileBuffer);
+			var path=dir+file['name'];
+			/*Open the directory, write the file to /public/files */
+			fs.open(path,'w',function(err,fd){
+				if(err){
+					 throw 'could not open file: ' + err;
+				}
+				/* Write the file */
+				fs.write(fd, buffer, 0, buffer.length, null, function(err){
+					if (err) throw 'error writing file: ' + err;
+					fs.close(fd, function() {
+						console.log('wrote the file successfully');
+					});
+				});				
+			});
+			for(var i in users){
+				if(users[i]!=socket){
+					users[i].emit('uploadDone', {'user': file['user'], 'fileName': file['name']});
+				}
+			}	
+			fileData=[];	
+			slice=0;
+		}else{
+			//request more data of the file is being uploaded
+			socket.emit('requestSlice', slice);			
 		}
 	});
 });
@@ -133,4 +165,14 @@ function findKey(array,value){
 		}
 	}
 	return false;
+}
+
+/*Convert arrayBuffer to Buffer*/
+function toBuffer(ab) {
+    var buffer = new Buffer(ab.byteLength);
+    var view = new Uint8Array(ab);
+    for (var i = 0; i < buffer.length; ++i) {
+        buffer[i] = view[i];
+    }
+    return buffer;
 }
