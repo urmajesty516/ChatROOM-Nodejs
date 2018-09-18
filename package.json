@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "my first socket.io app",
   "author": "Janice Zhong",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "dependencies": {
 	"express": "v4.16.3",
 	"socket.io": "v2.1.1"
