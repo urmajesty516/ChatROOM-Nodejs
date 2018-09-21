@@ -8,7 +8,7 @@ Support file format: 'txt','doc','pdf'.
 <h2>Usage</h2>
 
 Clone the repository:
-<pre>git clone git@github.com:yourGitAccount/socket-chatroom.git</pre>
+<pre>git clone git@github.com:urmajesty516/socket-chatroom.git</pre>
 
 Install Dependencies:
 <pre>$ npm install</pre>
